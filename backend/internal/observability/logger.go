@@ -12,7 +12,8 @@ func RequestLogger() fiber.Handler {
 		start := time.Now()
 		err := c.Next()
 		duration := time.Since(start)
-		log.Printf("method=%s path=%s status=%d duration=%s", c.Method(), c.Path(), c.Response().StatusCode(), duration)
+		requestID, _ := c.Locals("request_id").(string)
+		log.Printf("request_id=%s method=%s path=%s status=%d duration=%s", requestID, c.Method(), c.Path(), c.Response().StatusCode(), duration)
 		return err
 	}
 }
