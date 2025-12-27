@@ -41,6 +41,36 @@ Response (not found):
 }
 ```
 
+### List clusters (with pagination)
+
+```bash
+curl -s "http://localhost:8080/api/v1/clusters?limit=2&offset=0"
+```
+
+Response (success):
+
+```json
+{
+  "data": [
+    {
+      "id": "5c7fbda1-2a80-4df0-8a35-5d4aa1f4b6f6",
+      "name": "prod-cluster",
+      "status": "ready",
+      "created_at": "2025-01-09T12:15:11Z",
+      "updated_at": "2025-01-10T09:02:54Z"
+    }
+  ],
+  "meta": {
+    "request_id": "5b2143f1-7ce1-4f2c-9d5c-6b4d29a4f2a1",
+    "pagination": {
+      "total": 1,
+      "limit": 2,
+      "offset": 0
+    }
+  }
+}
+```
+
 Response (success):
 
 ```json
