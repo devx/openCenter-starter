@@ -4,7 +4,8 @@
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
-    "start": "vinxi start"
+    "start": "vinxi start",
+    "test": "vitest run"
   },
   "dependencies": {
     "@solidjs/router": "^0.15.3",
@@ -14,6 +15,9 @@
     "solid-js": "^1.9.9",
     "unocss": "^66.5.2",
     "vinxi": "^0.5.8"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=22"

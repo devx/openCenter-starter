@@ -15,6 +15,11 @@ description = "Install frontend dependencies"
 run = "npm install"
 dir = "frontend"
 
+[tasks."frontend:test"]
+description = "Run frontend tests"
+run = "npm test"
+dir = "frontend"
+
 [tasks."backend:dev"]
 description = "Run the Go backend server"
 run = "go run ./cmd/server"

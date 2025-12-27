@@ -45,6 +45,12 @@ Install frontend dependencies via mise:
 mise run frontend:install
 ```
 
+Run frontend tests via mise:
+
+```bash
+mise run frontend:test
+```
+
 ## Backend dev server
 
 Run the backend via mise:
