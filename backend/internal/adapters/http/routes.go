@@ -12,4 +12,6 @@ func registerRoutes(app *fiber.App) {
 			"status":  "ok",
 		}))
 	})
+
+	v1.Get("/clusters", listClusters)
 }
