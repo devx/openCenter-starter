@@ -52,3 +52,9 @@ Run the backend via mise:
 ```bash
 mise run backend:dev
 ```
+
+Run backend tests via mise:
+
+```bash
+mise run backend:test
+```

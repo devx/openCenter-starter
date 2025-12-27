@@ -19,3 +19,8 @@ dir = "frontend"
 description = "Run the Go backend server"
 run = "go run ./cmd/server"
 dir = "backend"
+
+[tasks."backend:test"]
+description = "Run backend tests"
+run = "go test ./..."
+dir = "backend"
