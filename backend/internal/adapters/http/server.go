@@ -34,9 +34,10 @@ func New() *Server {
 				code = "internal_error"
 			}
 
-			return WriteJSON(c, status, NewError(code, message))
+			return WriteJSON(c, status, NewError(RequestIDFromCtx(c), code, message))
 		},
 	})
+	app.Use(observability.RequestID())
 	app.Use(observability.RequestLogger())
 	health.Register(app)
 	registerRoutes(app)
