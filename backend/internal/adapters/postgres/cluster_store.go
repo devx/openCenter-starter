@@ -111,8 +111,7 @@ func (s *ClusterStore) Update(ctx context.Context, id string, update ports.Clust
 	const query = `
 		UPDATE clusters
 		SET name = COALESCE($2, name),
-			status = COALESCE($3, status),
-			updated_at = NOW()
+			status = COALESCE($3, status)
 		WHERE id = $1
 		RETURNING id, name, status, created_at, updated_at`
 
@@ -131,8 +130,7 @@ func (s *ClusterStore) Update(ctx context.Context, id string, update ports.Clust
 func (s *ClusterStore) Archive(ctx context.Context, id string) (ports.Cluster, bool, error) {
 	const query = `
 		UPDATE clusters
-		SET status = 'archived',
-			updated_at = NOW()
+		SET status = 'archived'
 		WHERE id = $1
 		RETURNING id, name, status, created_at, updated_at`
 
