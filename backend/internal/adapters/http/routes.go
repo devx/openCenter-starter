@@ -14,6 +14,8 @@ func registerRoutes(app *fiber.App) {
 	})
 
 	v1.Get("/clusters", listClusters)
+	v1.Get("/clusters/:id", getCluster)
 	v1.Post("/clusters", createCluster)
 	v1.Patch("/clusters/:id", updateCluster)
+	v1.Delete("/clusters/:id", archiveCluster)
 }

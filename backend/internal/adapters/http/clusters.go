@@ -44,6 +44,23 @@ func listClusters(c *fiber.Ctx) error {
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), result))
 }
 
+func getCluster(c *fiber.Ctx) error {
+	id := strings.TrimSpace(c.Params("id"))
+	if id == "" {
+		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "cluster id is required"))
+	}
+
+	clusters.mu.RLock()
+	cluster, ok := clusters.clusters[id]
+	clusters.mu.RUnlock()
+
+	if !ok {
+		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
+	}
+
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+}
+
 func createCluster(c *fiber.Ctx) error {
 	var payload ClusterCreateRequest
 	if err := c.BodyParser(&payload); err != nil {
@@ -103,6 +120,26 @@ func updateCluster(c *fiber.Ctx) error {
 		cluster.Status = status
 	}
 
+	clusters.clusters[id] = cluster
+
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+}
+
+func archiveCluster(c *fiber.Ctx) error {
+	id := strings.TrimSpace(c.Params("id"))
+	if id == "" {
+		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "cluster id is required"))
+	}
+
+	clusters.mu.Lock()
+	defer clusters.mu.Unlock()
+
+	cluster, ok := clusters.clusters[id]
+	if !ok {
+		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
+	}
+
+	cluster.Status = "archived"
 	clusters.clusters[id] = cluster
 
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
