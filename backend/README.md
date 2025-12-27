@@ -82,6 +82,31 @@ Query parameters:
 - `name_prefix`: prefix match on cluster name.
 - `id_prefix`: prefix match on cluster id.
 
+### Create cluster
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/clusters \\
+  -H 'Content-Type: application/json' \\
+  -d '{"name":"prod-cluster"}'
+```
+
+Response (success):
+
+```json
+{
+  "data": {
+    "id": "2d3c6b74-4b2a-4b6d-8b16-2f6b7d4c0c9f",
+    "name": "prod-cluster",
+    "status": "provisioning",
+    "created_at": "2025-01-12T10:01:11Z",
+    "updated_at": "2025-01-12T10:01:11Z"
+  },
+  "meta": {
+    "request_id": "4a75c3b0-49c2-4301-8a3d-463e2a5f0f7f"
+  }
+}
+```
+
 Response (success):
 
 ```json
