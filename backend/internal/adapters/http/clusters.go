@@ -1,6 +1,8 @@
 package http
 
 import (
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -33,15 +35,44 @@ var clusters = &clusterStore{
 }
 
 func listClusters(c *fiber.Ctx) error {
+	statusFilter := strings.TrimSpace(c.Query("status"))
+	limit := parseQueryInt(c, "limit", 50)
+	offset := parseQueryInt(c, "offset", 0)
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
 	clusters.mu.RLock()
 	defer clusters.mu.RUnlock()
 
 	result := make([]ClusterSummary, 0, len(clusters.clusters))
 	for _, cluster := range clusters.clusters {
+		if statusFilter != "" && cluster.Status != statusFilter {
+			continue
+		}
 		result = append(result, cluster)
 	}
 
-	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), result))
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
+
+	if offset >= len(result) {
+		return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), []ClusterSummary{}))
+	}
+
+	end := offset + limit
+	if end > len(result) {
+		end = len(result)
+	}
+
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), result[offset:end]))
 }
 
 func getCluster(c *fiber.Ctx) error {
@@ -143,4 +174,18 @@ func archiveCluster(c *fiber.Ctx) error {
 	clusters.clusters[id] = cluster
 
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+}
+
+func parseQueryInt(c *fiber.Ctx, key string, fallback int) int {
+	value := strings.TrimSpace(c.Query(key))
+	if value == "" {
+		return fallback
+	}
+
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		return fallback
+	}
+
+	return parsed
 }
