@@ -39,6 +39,12 @@ Run the frontend via mise:
 mise run frontend:dev
 ```
 
+Install frontend dependencies via mise:
+
+```bash
+mise run frontend:install
+```
+
 ## Backend dev server
 
 Run the backend via mise:

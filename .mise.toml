@@ -10,6 +10,11 @@ description = "Run the SolidStart dev server"
 run = "npm run dev"
 dir = "frontend"
 
+[tasks."frontend:install"]
+description = "Install frontend dependencies"
+run = "npm install"
+dir = "frontend"
+
 [tasks."backend:dev"]
 description = "Run the Go backend server"
 run = "go run ./cmd/server"
