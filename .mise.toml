@@ -1,0 +1,6 @@
+[tools]
+node = "lts"
+
+[tasks."openapi:validate"]
+description = "Validate backend OpenAPI spec"
+run = "npx @redocly/cli lint backend/openapi.yaml"

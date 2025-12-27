@@ -22,3 +22,11 @@ migrate -path ./migrations -database "$DATABASE_URL" up
 ## API specification
 
 The OpenAPI 3.1 spec for this service lives at `backend/openapi.yaml`.
+
+## OpenAPI validation
+
+Use mise to validate the spec:
+
+```bash
+mise run openapi:validate
+```
