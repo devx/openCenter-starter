@@ -20,6 +20,11 @@ description = "Run frontend tests"
 run = "npm test"
 dir = "frontend"
 
+[tasks."frontend:test:watch"]
+description = "Run frontend tests in watch mode"
+run = "npm run test:watch"
+dir = "frontend"
+
 [tasks."backend:dev"]
 description = "Run the Go backend server"
 run = "go run ./cmd/server"

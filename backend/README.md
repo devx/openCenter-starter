@@ -51,6 +51,12 @@ Run frontend tests via mise:
 mise run frontend:test
 ```
 
+Run frontend tests in watch mode via mise:
+
+```bash
+mise run frontend:test:watch
+```
+
 ## Backend dev server
 
 Run the backend via mise:

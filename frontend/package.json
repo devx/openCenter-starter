@@ -5,7 +5,8 @@
     "dev": "vinxi dev",
     "build": "vinxi build",
     "start": "vinxi start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@solidjs/router": "^0.15.3",
@@ -17,8 +18,11 @@
     "vinxi": "^0.5.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/solid": "^0.14.1",
+    "jsdom": "^26.1.0",
     "vitest": "^3.2.4"
-  },
+  }
   "engines": {
     "node": ">=22"
   }
