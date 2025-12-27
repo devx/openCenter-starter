@@ -30,3 +30,11 @@ Use mise to validate the spec:
 ```bash
 mise run openapi:validate
 ```
+
+## Frontend dev server
+
+Run the frontend via mise:
+
+```bash
+mise run frontend:dev
+```
