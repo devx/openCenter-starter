@@ -1,21 +1,25 @@
 package http
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/devx/openCenter-starter/backend/internal/adapters/memory"
+	"github.com/devx/openCenter-starter/backend/internal/adapters/postgres"
+	"github.com/devx/openCenter-starter/backend/internal/config"
 	"github.com/devx/openCenter-starter/backend/internal/health"
 	"github.com/devx/openCenter-starter/backend/internal/observability"
+	"github.com/devx/openCenter-starter/backend/internal/ports"
 )
 
 type Server struct {
 	app *fiber.App
 }
 
-func New() *Server {
+func New(cfg config.Config) (*Server, error) {
 	app := fiber.New(fiber.Config{
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			status := fiber.StatusInternalServerError
@@ -41,11 +45,22 @@ func New() *Server {
 	app.Use(observability.RequestID())
 	app.Use(observability.RequestLogger())
 	health.Register(app)
-	clusterStore := memory.NewClusterStore()
+	clusterStore, err := resolveClusterStore(cfg)
+	if err != nil {
+		return nil, err
+	}
 	clusterHandler := NewClusterHandler(clusterStore)
 	registerRoutes(app, clusterHandler)
 
-	return &Server{app: app}
+	return &Server{app: app}, nil
+}
+
+func resolveClusterStore(cfg config.Config) (ports.ClusterStore, error) {
+	if cfg.DatabaseURL == "" {
+		return memory.NewClusterStore(), nil
+	}
+
+	return postgres.NewClusterStore(context.Background(), cfg.DatabaseURL)
 }
 
 func (s *Server) Listen(addr string) error {

@@ -9,7 +9,10 @@ import (
 
 func main() {
 	cfg := config.Load()
-	server := httpadapter.New()
+	server, err := httpadapter.New(cfg)
+	if err != nil {
+		log.Fatalf("server init error: %v", err)
+	}
 
 	log.Printf("starting server on %s", cfg.Addr)
 	if err := server.Listen(cfg.Addr); err != nil {
