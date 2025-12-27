@@ -1,13 +1,12 @@
 package http
 
 import (
-	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
+
+	"github.com/devx/openCenter-starter/backend/internal/ports"
 )
 
 type ClusterSummary struct {
@@ -25,17 +24,18 @@ type ClusterUpdateRequest struct {
 	Status *string `json:"status"`
 }
 
-type clusterStore struct {
-	mu       sync.RWMutex
-	clusters map[string]ClusterSummary
+type ClusterHandler struct {
+	store ports.ClusterStore
 }
 
-var clusters = &clusterStore{
-	clusters: map[string]ClusterSummary{},
+func NewClusterHandler(store ports.ClusterStore) *ClusterHandler {
+	return &ClusterHandler{store: store}
 }
 
-func listClusters(c *fiber.Ctx) error {
+func (h *ClusterHandler) listClusters(c *fiber.Ctx) error {
 	statusFilter := strings.TrimSpace(c.Query("status"))
+	namePrefix := strings.TrimSpace(c.Query("name_prefix"))
+	idPrefix := strings.TrimSpace(c.Query("id_prefix"))
 	limit := parseQueryInt(c, "limit", 50)
 	offset := parseQueryInt(c, "offset", 0)
 	if limit < 1 {
@@ -48,23 +48,29 @@ func listClusters(c *fiber.Ctx) error {
 		offset = 0
 	}
 
-	clusters.mu.RLock()
-	defer clusters.mu.RUnlock()
-
-	result := make([]ClusterSummary, 0, len(clusters.clusters))
-	for _, cluster := range clusters.clusters {
-		if statusFilter != "" && cluster.Status != statusFilter {
-			continue
-		}
-		result = append(result, cluster)
+	filter := ports.ClusterFilter{
+		Status:     statusFilter,
+		NamePrefix: namePrefix,
+		IDPrefix:   idPrefix,
+		Limit:      limit,
+		Offset:     offset,
 	}
 
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Name < result[j].Name
-	})
+	items, total, err := h.store.List(c.Context(), filter)
+	if err != nil {
+		return WriteJSON(c, fiber.StatusInternalServerError, NewError(RequestIDFromCtx(c), "internal_error", "unable to list clusters"))
+	}
 
-	total := len(result)
-	if offset >= len(result) {
+	result := make([]ClusterSummary, 0, len(items))
+	for _, cluster := range items {
+		result = append(result, ClusterSummary{
+			ID:     cluster.ID,
+			Name:   cluster.Name,
+			Status: cluster.Status,
+		})
+	}
+
+	if offset >= total {
 		return WriteJSON(c, fiber.StatusOK, NewSuccessWithPagination(
 			RequestIDFromCtx(c),
 			[]ClusterSummary{},
@@ -72,36 +78,36 @@ func listClusters(c *fiber.Ctx) error {
 		))
 	}
 
-	end := offset + limit
-	if end > len(result) {
-		end = len(result)
-	}
-
 	return WriteJSON(c, fiber.StatusOK, NewSuccessWithPagination(
 		RequestIDFromCtx(c),
-		result[offset:end],
+		result,
 		PaginationMeta{Total: total, Limit: limit, Offset: offset},
 	))
 }
 
-func getCluster(c *fiber.Ctx) error {
+func (h *ClusterHandler) getCluster(c *fiber.Ctx) error {
 	id := strings.TrimSpace(c.Params("id"))
 	if id == "" {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "cluster id is required"))
 	}
 
-	clusters.mu.RLock()
-	cluster, ok := clusters.clusters[id]
-	clusters.mu.RUnlock()
+	cluster, ok, err := h.store.Get(c.Context(), id)
+	if err != nil {
+		return WriteJSON(c, fiber.StatusInternalServerError, NewError(RequestIDFromCtx(c), "internal_error", "unable to read cluster"))
+	}
 
 	if !ok {
 		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
 	}
 
-	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
+		ID:     cluster.ID,
+		Name:   cluster.Name,
+		Status: cluster.Status,
+	}))
 }
 
-func createCluster(c *fiber.Ctx) error {
+func (h *ClusterHandler) createCluster(c *fiber.Ctx) error {
 	var payload ClusterCreateRequest
 	if err := c.BodyParser(&payload); err != nil {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "invalid JSON payload"))
@@ -112,20 +118,19 @@ func createCluster(c *fiber.Ctx) error {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "name is required"))
 	}
 
-	cluster := ClusterSummary{
-		ID:     uuid.NewString(),
-		Name:   name,
-		Status: "provisioning",
+	cluster, err := h.store.Create(c.Context(), name)
+	if err != nil {
+		return WriteJSON(c, fiber.StatusInternalServerError, NewError(RequestIDFromCtx(c), "internal_error", "unable to create cluster"))
 	}
 
-	clusters.mu.Lock()
-	clusters.clusters[cluster.ID] = cluster
-	clusters.mu.Unlock()
-
-	return WriteJSON(c, fiber.StatusCreated, NewSuccess(RequestIDFromCtx(c), cluster))
+	return WriteJSON(c, fiber.StatusCreated, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
+		ID:     cluster.ID,
+		Name:   cluster.Name,
+		Status: cluster.Status,
+	}))
 }
 
-func updateCluster(c *fiber.Ctx) error {
+func (h *ClusterHandler) updateCluster(c *fiber.Ctx) error {
 	id := strings.TrimSpace(c.Params("id"))
 	if id == "" {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "cluster id is required"))
@@ -136,20 +141,12 @@ func updateCluster(c *fiber.Ctx) error {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "invalid JSON payload"))
 	}
 
-	clusters.mu.Lock()
-	defer clusters.mu.Unlock()
-
-	cluster, ok := clusters.clusters[id]
-	if !ok {
-		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
-	}
-
 	if payload.Name != nil {
 		name := strings.TrimSpace(*payload.Name)
 		if name == "" {
 			return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "name cannot be empty"))
 		}
-		cluster.Name = name
+		payload.Name = &name
 	}
 
 	if payload.Status != nil {
@@ -157,32 +154,48 @@ func updateCluster(c *fiber.Ctx) error {
 		if status == "" {
 			return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "status cannot be empty"))
 		}
-		cluster.Status = status
+		payload.Status = &status
 	}
 
-	clusters.clusters[id] = cluster
+	update := ports.ClusterUpdate{
+		Name:   payload.Name,
+		Status: payload.Status,
+	}
 
-	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+	cluster, ok, err := h.store.Update(c.Context(), id, update)
+	if err != nil {
+		return WriteJSON(c, fiber.StatusInternalServerError, NewError(RequestIDFromCtx(c), "internal_error", "unable to update cluster"))
+	}
+	if !ok {
+		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
+	}
+
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
+		ID:     cluster.ID,
+		Name:   cluster.Name,
+		Status: cluster.Status,
+	}))
 }
 
-func archiveCluster(c *fiber.Ctx) error {
+func (h *ClusterHandler) archiveCluster(c *fiber.Ctx) error {
 	id := strings.TrimSpace(c.Params("id"))
 	if id == "" {
 		return WriteJSON(c, fiber.StatusBadRequest, NewError(RequestIDFromCtx(c), "invalid_request", "cluster id is required"))
 	}
 
-	clusters.mu.Lock()
-	defer clusters.mu.Unlock()
-
-	cluster, ok := clusters.clusters[id]
+	cluster, ok, err := h.store.Archive(c.Context(), id)
+	if err != nil {
+		return WriteJSON(c, fiber.StatusInternalServerError, NewError(RequestIDFromCtx(c), "internal_error", "unable to archive cluster"))
+	}
 	if !ok {
 		return WriteJSON(c, fiber.StatusNotFound, NewError(RequestIDFromCtx(c), "not_found", "cluster not found"))
 	}
 
-	cluster.Status = "archived"
-	clusters.clusters[id] = cluster
-
-	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), cluster))
+	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
+		ID:     cluster.ID,
+		Name:   cluster.Name,
+		Status: cluster.Status,
+	}))
 }
 
 func parseQueryInt(c *fiber.Ctx, key string, fallback int) int {

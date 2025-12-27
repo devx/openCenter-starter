@@ -6,6 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/devx/openCenter-starter/backend/internal/adapters/memory"
 	"github.com/devx/openCenter-starter/backend/internal/health"
 	"github.com/devx/openCenter-starter/backend/internal/observability"
 )
@@ -40,7 +41,9 @@ func New() *Server {
 	app.Use(observability.RequestID())
 	app.Use(observability.RequestLogger())
 	health.Register(app)
-	registerRoutes(app)
+	clusterStore := memory.NewClusterStore()
+	clusterHandler := NewClusterHandler(clusterStore)
+	registerRoutes(app, clusterHandler)
 
 	return &Server{app: app}
 }
