@@ -40,3 +40,20 @@ Response (not found):
   }
 }
 ```
+
+Response (success):
+
+```json
+{
+  "data": {
+    "id": "5c7fbda1-2a80-4df0-8a35-5d4aa1f4b6f6",
+    "name": "prod-cluster",
+    "status": "ready",
+    "created_at": "2025-01-09T12:15:11Z",
+    "updated_at": "2025-01-10T09:02:54Z"
+  },
+  "meta": {
+    "request_id": "d9b9a046-1f31-45cc-8299-6f1dd903c702"
+  }
+}
+```
