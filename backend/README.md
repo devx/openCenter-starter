@@ -38,3 +38,11 @@ Run the frontend via mise:
 ```bash
 mise run frontend:dev
 ```
+
+## Backend dev server
+
+Run the backend via mise:
+
+```bash
+mise run backend:dev
+```

@@ -9,3 +9,8 @@ run = "npx @redocly/cli lint backend/openapi.yaml"
 description = "Run the SolidStart dev server"
 run = "npm run dev"
 dir = "frontend"
+
+[tasks."backend:dev"]
+description = "Run the Go backend server"
+run = "go run ./cmd/server"
+dir = "backend"
