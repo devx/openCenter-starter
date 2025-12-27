@@ -63,8 +63,13 @@ func listClusters(c *fiber.Ctx) error {
 		return result[i].Name < result[j].Name
 	})
 
+	total := len(result)
 	if offset >= len(result) {
-		return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), []ClusterSummary{}))
+		return WriteJSON(c, fiber.StatusOK, NewSuccessWithPagination(
+			RequestIDFromCtx(c),
+			[]ClusterSummary{},
+			PaginationMeta{Total: total, Limit: limit, Offset: offset},
+		))
 	}
 
 	end := offset + limit
@@ -72,7 +77,11 @@ func listClusters(c *fiber.Ctx) error {
 		end = len(result)
 	}
 
-	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), result[offset:end]))
+	return WriteJSON(c, fiber.StatusOK, NewSuccessWithPagination(
+		RequestIDFromCtx(c),
+		result[offset:end],
+		PaginationMeta{Total: total, Limit: limit, Offset: offset},
+	))
 }
 
 func getCluster(c *fiber.Ctx) error {

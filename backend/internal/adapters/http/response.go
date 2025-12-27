@@ -20,7 +20,14 @@ type SuccessResponse[T any] struct {
 }
 
 type ResponseMeta struct {
-	RequestID string `json:"request_id"`
+	RequestID  string          `json:"request_id"`
+	Pagination *PaginationMeta `json:"pagination,omitempty"`
+}
+
+type PaginationMeta struct {
+	Total  int `json:"total"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 func NewError(requestID, code, message string) ErrorResponse {
@@ -34,6 +41,13 @@ func NewSuccess[T any](requestID string, data T) SuccessResponse[T] {
 	return SuccessResponse[T]{
 		Data: data,
 		Meta: ResponseMeta{RequestID: requestID},
+	}
+}
+
+func NewSuccessWithPagination[T any](requestID string, data T, pagination PaginationMeta) SuccessResponse[T] {
+	return SuccessResponse[T]{
+		Data: data,
+		Meta: ResponseMeta{RequestID: requestID, Pagination: &pagination},
 	}
 }
 
