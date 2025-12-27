@@ -10,6 +10,15 @@ cd backend
 go run ./cmd/server
 ```
 
+## Database migrations
+
+Install the `migrate` CLI (https://github.com/golang-migrate/migrate) and set `DATABASE_URL`.
+
+```bash
+export DATABASE_URL="postgres://user:pass@localhost:5432/opencenter?sslmode=disable"
+migrate -path ./migrations -database "$DATABASE_URL" up
+```
+
 ## API examples
 
 ### Get cluster by id
