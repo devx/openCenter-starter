@@ -71,6 +71,17 @@ Response (success):
 }
 ```
 
+### List clusters (filters)
+
+```bash
+curl -s "http://localhost:8080/api/v1/clusters?status=ready&name_prefix=prod&id_prefix=5c7f"
+```
+
+Query parameters:
+- `status`: exact match on cluster status.
+- `name_prefix`: prefix match on cluster name.
+- `id_prefix`: prefix match on cluster id.
+
 Response (success):
 
 ```json
