@@ -31,7 +31,7 @@ func NewClusterStore(ctx context.Context, databaseURL string) (*ClusterStore, er
 
 func (s *ClusterStore) List(ctx context.Context, filter ports.ClusterFilter) ([]ports.Cluster, int, error) {
 	const baseQuery = `
-		SELECT id, name, status
+		SELECT id, name, status, created_at, updated_at
 		FROM clusters
 		WHERE ($1 = '' OR status = $1)
 		  AND ($2 = '' OR name LIKE $2 || '%')
@@ -48,7 +48,7 @@ func (s *ClusterStore) List(ctx context.Context, filter ports.ClusterFilter) ([]
 	clusters := make([]ports.Cluster, 0)
 	for rows.Next() {
 		var cluster ports.Cluster
-		if err := rows.Scan(&cluster.ID, &cluster.Name, &cluster.Status); err != nil {
+		if err := rows.Scan(&cluster.ID, &cluster.Name, &cluster.Status, &cluster.CreatedAt, &cluster.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
 		clusters = append(clusters, cluster)
@@ -74,12 +74,12 @@ func (s *ClusterStore) List(ctx context.Context, filter ports.ClusterFilter) ([]
 
 func (s *ClusterStore) Get(ctx context.Context, id string) (ports.Cluster, bool, error) {
 	const query = `
-		SELECT id, name, status
+		SELECT id, name, status, created_at, updated_at
 		FROM clusters
 		WHERE id = $1`
 
 	var cluster ports.Cluster
-	err := s.pool.QueryRow(ctx, query, id).Scan(&cluster.ID, &cluster.Name, &cluster.Status)
+	err := s.pool.QueryRow(ctx, query, id).Scan(&cluster.ID, &cluster.Name, &cluster.Status, &cluster.CreatedAt, &cluster.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ports.Cluster{}, false, nil
 	}
@@ -94,13 +94,13 @@ func (s *ClusterStore) Create(ctx context.Context, name string) (ports.Cluster, 
 	const query = `
 		INSERT INTO clusters (id, name, status)
 		VALUES ($1, $2, $3)
-		RETURNING id, name, status`
+		RETURNING id, name, status, created_at, updated_at`
 
 	clusterID := uuid.NewString()
 	status := "provisioning"
 
 	var cluster ports.Cluster
-	if err := s.pool.QueryRow(ctx, query, clusterID, name, status).Scan(&cluster.ID, &cluster.Name, &cluster.Status); err != nil {
+	if err := s.pool.QueryRow(ctx, query, clusterID, name, status).Scan(&cluster.ID, &cluster.Name, &cluster.Status, &cluster.CreatedAt, &cluster.UpdatedAt); err != nil {
 		return ports.Cluster{}, err
 	}
 
@@ -114,10 +114,10 @@ func (s *ClusterStore) Update(ctx context.Context, id string, update ports.Clust
 			status = COALESCE($3, status),
 			updated_at = NOW()
 		WHERE id = $1
-		RETURNING id, name, status`
+		RETURNING id, name, status, created_at, updated_at`
 
 	var cluster ports.Cluster
-	err := s.pool.QueryRow(ctx, query, id, update.Name, update.Status).Scan(&cluster.ID, &cluster.Name, &cluster.Status)
+	err := s.pool.QueryRow(ctx, query, id, update.Name, update.Status).Scan(&cluster.ID, &cluster.Name, &cluster.Status, &cluster.CreatedAt, &cluster.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ports.Cluster{}, false, nil
 	}
@@ -134,10 +134,10 @@ func (s *ClusterStore) Archive(ctx context.Context, id string) (ports.Cluster, b
 		SET status = 'archived',
 			updated_at = NOW()
 		WHERE id = $1
-		RETURNING id, name, status`
+		RETURNING id, name, status, created_at, updated_at`
 
 	var cluster ports.Cluster
-	err := s.pool.QueryRow(ctx, query, id).Scan(&cluster.ID, &cluster.Name, &cluster.Status)
+	err := s.pool.QueryRow(ctx, query, id).Scan(&cluster.ID, &cluster.Name, &cluster.Status, &cluster.CreatedAt, &cluster.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ports.Cluster{}, false, nil
 	}

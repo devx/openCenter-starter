@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -69,10 +70,13 @@ func (s *ClusterStore) Create(_ context.Context, name string) (ports.Cluster, er
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	now := time.Now().UTC()
 	cluster := ports.Cluster{
-		ID:     uuid.NewString(),
-		Name:   name,
-		Status: "provisioning",
+		ID:        uuid.NewString(),
+		Name:      name,
+		Status:    "provisioning",
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 	s.clusters[cluster.ID] = cluster
 	return cluster, nil
@@ -93,6 +97,7 @@ func (s *ClusterStore) Update(_ context.Context, id string, update ports.Cluster
 	if update.Status != nil {
 		cluster.Status = *update.Status
 	}
+	cluster.UpdatedAt = time.Now().UTC()
 
 	s.clusters[id] = cluster
 	return cluster, true, nil
@@ -108,6 +113,7 @@ func (s *ClusterStore) Archive(_ context.Context, id string) (ports.Cluster, boo
 	}
 
 	cluster.Status = "archived"
+	cluster.UpdatedAt = time.Now().UTC()
 	s.clusters[id] = cluster
 	return cluster, true, nil
 }

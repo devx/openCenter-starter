@@ -3,6 +3,7 @@ package http
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -10,9 +11,11 @@ import (
 )
 
 type ClusterSummary struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ClusterCreateRequest struct {
@@ -64,9 +67,11 @@ func (h *ClusterHandler) listClusters(c *fiber.Ctx) error {
 	result := make([]ClusterSummary, 0, len(items))
 	for _, cluster := range items {
 		result = append(result, ClusterSummary{
-			ID:     cluster.ID,
-			Name:   cluster.Name,
-			Status: cluster.Status,
+			ID:        cluster.ID,
+			Name:      cluster.Name,
+			Status:    cluster.Status,
+			CreatedAt: cluster.CreatedAt,
+			UpdatedAt: cluster.UpdatedAt,
 		})
 	}
 
@@ -101,9 +106,11 @@ func (h *ClusterHandler) getCluster(c *fiber.Ctx) error {
 	}
 
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
-		ID:     cluster.ID,
-		Name:   cluster.Name,
-		Status: cluster.Status,
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
 	}))
 }
 
@@ -124,9 +131,11 @@ func (h *ClusterHandler) createCluster(c *fiber.Ctx) error {
 	}
 
 	return WriteJSON(c, fiber.StatusCreated, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
-		ID:     cluster.ID,
-		Name:   cluster.Name,
-		Status: cluster.Status,
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
 	}))
 }
 
@@ -171,9 +180,11 @@ func (h *ClusterHandler) updateCluster(c *fiber.Ctx) error {
 	}
 
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
-		ID:     cluster.ID,
-		Name:   cluster.Name,
-		Status: cluster.Status,
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
 	}))
 }
 
@@ -192,9 +203,11 @@ func (h *ClusterHandler) archiveCluster(c *fiber.Ctx) error {
 	}
 
 	return WriteJSON(c, fiber.StatusOK, NewSuccess(RequestIDFromCtx(c), ClusterSummary{
-		ID:     cluster.ID,
-		Name:   cluster.Name,
-		Status: cluster.Status,
+		ID:        cluster.ID,
+		Name:      cluster.Name,
+		Status:    cluster.Status,
+		CreatedAt: cluster.CreatedAt,
+		UpdatedAt: cluster.UpdatedAt,
 	}))
 }
 

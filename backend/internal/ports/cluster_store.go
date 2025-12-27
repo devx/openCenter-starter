@@ -1,11 +1,16 @@
 package ports
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Cluster struct {
-	ID     string
-	Name   string
-	Status string
+	ID        string
+	Name      string
+	Status    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type ClusterUpdate struct {
